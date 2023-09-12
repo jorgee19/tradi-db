@@ -1,0 +1,58 @@
+version: '2.4'
+
+services:
+  database:
+    #Imagen del cual se va a basar el contenedor. Se pueden hacer propias.
+    image: postgres:11-alpine
+
+    # Variables de ENTORNO, sirve para la creación del contenedor.
+    environment:
+      - POSTGRES_USER=${DBUSER}
+      - POSTGRES_PASSWORD=${DBPASSWORD}
+      - POSTGRES_DB=${DBNAME}
+
+    # Se encarga en hacer persistente los datos.
+    # Por defecto, al hacer `docker-compose down` se borra toda la información
+    # Al crear un volumen, estamos ligando la información de la maquina a
+    # nuestra computadora.
+    volumes:
+     - ./database:/var/lib/postgresql/data
+     - ./psql/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    # Redes, sirve para la inter-conexión de contenedores, no es necesario
+    # exponer puertos a nuestra maquina si los contenedores solo se necesitan
+    # comunicarse entre si.
+    # Ejemplo:
+    # Red de postgres-express, no necesitamos exponer postgres, solo express.
+    networks:
+      - backend
+
+    # Puertos que estan expuestos, el primer número es el puerto que tendremos
+    # en nuestra computadora, el segundo es el puerto del contenedor.
+    ports:
+      - 10000:5432
+
+    # Limita la memoria para V2.4
+    # Actualmente se esta usando.
+    mem_limit: 256m
+    mem_reservation: 64m
+
+    # Limita la memoria para V3, con docker swarm.
+    # No lo vamos a usar, ¿Por ahora?
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 256m
+    #     reservations:
+    #       memory: 100m
+
+  # Futuro contenedor para utilizar express en docker.
+  # express-app:
+  #  depends_on:
+    #  - database
+# volumes:
+
+networks:
+  backend:
+
+#psql -h 127.0.0.1 -p 10000 -d exampleApp -U exampleAppUser -W
